@@ -16,6 +16,7 @@ app.use(bodyParser.json());
 
 
 
+
 // Config for only development
 if(process.env.NODE_ENV === 'development'){
   app.use(cors({

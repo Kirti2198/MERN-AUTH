@@ -35,14 +35,15 @@ const userSchema= new mongoose.Schema({
     default: ""
   }
 },{
-  timeStamp: true
-})
+  timestamps: true
+}
+);
 
 // Virtual password
 userSchema.virtual('password')
      .set(function (password){
       //  set password note you must use normal function not arrow function
-      this.password=password
+      this._password=password
       this.salt= this.makeSalt()
       this.hashed_password=this.encryptPassword(password)
      })
@@ -52,26 +53,25 @@ userSchema.virtual('password')
 
 // methods
 userSchema.methods = {
-  // Generate salt
-  makeSalt: function (){
-    return Math.round(new Date().valueOf()*Math.random())+ ''
+  authenticate: function(plainText) {
+    return this.encryptPassword(plainText) === this.hashed_password;
   },
-  // Encrypt Password
-  encryptPassword: function (password) {
-    if(!password) return ''
-    try{
+
+  encryptPassword: function(password) {
+    if (!password) return '';
+    try {
       return crypto
         .createHmac('sha1', this.salt)
         .update(password)
-        .digest('hex')
-    } catch(err){
-      return ''
+        .digest('hex');
+    } catch (err) {
+      return '';
     }
   },
-  // Compare password between plain get from user and hashed
-  authenticate: function(plainPassword) {
-    return this.encryptPassword(plainPassword === this.hashed_password)
+
+  makeSalt: function() {
+    return Math.round(new Date().valueOf() * Math.random()) + '';
   }
-  }
+};
 
 module.exports = mongoose.model('User', userSchema);
