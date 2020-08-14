@@ -28,9 +28,11 @@ if(process.env.NODE_ENV === 'development'){
   // Cors it's allow to deal with react for localhost at post 3000 without any problem
 }
 
+
 // Load all routes
 
 const authRouter= require('./routes/auth.route');
+const userRouter = require('./routes/user.route')
 
 // Use Routes
 app.use('/api/', authRouter);

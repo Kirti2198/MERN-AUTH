@@ -5,106 +5,102 @@ import axios from 'axios';
 import { authenticate, isAuth } from '../helpers/auth';
 import { Link, Redirect } from 'react-router-dom';
 import { GoogleLogin } from 'react-google-login';
-import  FacebookLogin from 'react-facebook-login/dist/facebook-login-render-props';
+import FacebookLogin from 'react-facebook-login/dist/facebook-login-render-props';
+
 const Login = ({ history }) => {
-	const [ formData, setFormData ] = useState({
-		email: '',
-		password1: '',
-		textChange: 'Sign In'
-	});
+  const [formData, setFormData] = useState({
+    email: '',
+    password1: '',
+    textChange: 'Sign In'
+  });
+  const { email, password1, textChange } = formData;
+  const handleChange = text => e => {
+    setFormData({ ...formData, [text]: e.target.value });
+  };
 
-	const { email, password1, textChange } = formData;
-	const handleChange = (text) => (e) => {
-		setFormData({ ...formData, [text]: e.target.value });
-	};
+  const sendGoogleToken = tokenId => {
+    axios
+      .post(`${process.env.REACT_APP_API_URL}/googlelogin`, {
+        idToken: tokenId
+      })
+      .then(res => {
+        console.log(res.data);
+        informParent(res);
+      })
+      .catch(error => {
+        console.log('GOOGLE SIGNIN ERROR', error.response);
+      });
+  };
+  const informParent = response => {
+    authenticate(response, () => {
+      isAuth() && isAuth().role === 'admin'
+        ? history.push('/admin')
+        : history.push('/private');
+    });
+  };
 
-	// send Facebook token
-	const sendFacebookToken = (userID, accessToken) => {
-		axios
-			.post(`${process.env.REACT_APP_API_URL}/facebooklogin`, {
-				userID,
-				accessToken
-			})
-			.then((res) => {
-				console.log(res.data);
-				informParent(res);
-			})
-			.catch((error) => {
-				console.log('FACEBOOK SIGNIN ERROR', error.response);
-			});
-	};
+  const sendFacebookToken = (userID, accessToken) => {
+    axios
+      .post(`${process.env.REACT_APP_API_URL}/facebooklogin`, {
+        userID,
+        accessToken
+      })
+      .then(res => {
+        console.log(res.data);
+        informParent(res);
+      })
+      .catch(error => {
+        console.log('GOOGLE SIGNIN ERROR', error.response);
+      });
+  };
+  const responseGoogle = response => {
+    console.log(response);
+    sendGoogleToken(response.tokenId);
+  };
 
-	// send google token
-	const sendGoogleToken = (tokenId) => {
-		axios
-			.post(`${process.env.REACT_APP_API_URL}/googlelogin`, {
-				idToken: tokenId
-			})
-			.then((res) => {
-				console.log(res.data);
-				informParent(res);
-			})
-			.catch((error) => {
-				console.log('GOOGLE SIGNIN ERROR', error.response);
-			});
-	};
+  const responseFacebook = response => {
+    console.log(response);
+    sendFacebookToken(response.userID, response.accessToken)
+  };
 
-	// If success we need to authenticate user and redirect
-	const informParent = (response) => {
-		authenticate(response, () => {
-			isAuth() && isAuth().role === 'admin' ? history.push('/admin') : history.push('/private');
-		});
-	};
-
-	// get response from google
-	const responseGoogle = (response) => {
-		console.log(response);
-		sendGoogleToken(response.tokenId);
-	};
-
-	// get response from facebook
-	const responseFacebook = (response) => {
-		console.log(response);
-		sendFacebookToken(response.userID, response.accessToken);
-	};
-
-	const handleSubmit = (e) => {
-		console.log(process.env.REACT_APP_API_URL);
-		e.preventDefault();
-		if (email && password1) {
-			setFormData({ ...formData, textChange: 'Submitting' });
-			axios
-				.post(`${process.env.REACT_APP_API_URL}/login`, {
-					email,
-					password: password1
-				})
-				.then((res) => {
-					authenticate(res, () => {
-						setFormData({
-							...formData,
-							email: '',
-							password1: '',
-							textChange: 'Submitted'
-						});
-						isAuth() && isAuth().role === 'admin' ? history.push('/admin') : history.push('/private');
-						toast.success(`Hey ${res.data.user.name}, Welcome back!`);
-					});
-				})
-				.catch((err) => {
-					setFormData({
-						...formData,
-						email: '',
-						password1: '',
-						textChange: 'Sign In'
-					});
-					console.log(err.response);
-					toast.error(err.response.data.errors);
-				});
-		} else {
-			toast.error('Please fill all fields');
-		}
-	};
-
+  const handleSubmit = e => {
+    console.log(process.env.REACT_APP_API_URL);
+    e.preventDefault();
+    if (email && password1) {
+      setFormData({ ...formData, textChange: 'Submitting' });
+      axios
+        .post(`${process.env.REACT_APP_API_URL}/login`, {
+          email,
+          password: password1
+        })
+        .then(res => {
+          authenticate(res, () => {
+            setFormData({
+              ...formData,
+              email: '',
+              password1: '',
+              textChange: 'Submitted'
+            });
+            isAuth() && isAuth().role === 'admin'
+              ? history.push('/admin')
+              : history.push('/private');
+            toast.success(`Hey ${res.data.user.name}, Welcome back!`);
+          });
+        })
+        .catch(err => {
+          setFormData({
+            ...formData,
+            email: '',
+            password1: '',
+            textChange: 'Sign In'
+          });
+          console.log(err.response);
+          toast.error(err.response.data.errors);
+        });
+    } else {
+      toast.error('Please fill all fields');
+    }
+  };
   return (
     <div className='min-h-screen bg-gray-100 text-gray-900 flex justify-center'>
       {/* {isAuth() ? <Redirect to='/' /> : null} */}
@@ -113,11 +109,44 @@ const Login = ({ history }) => {
         <div className='lg:w-1/2 xl:w-5/12 p-6 sm:p-12'>
           <div className='mt-12 flex flex-col items-center'>
             <h1 className='text-2xl xl:text-3xl font-extrabold'>
-              Sign In for Codeial
+              Sign In for Congar
             </h1>
             <div className='w-full flex-1 mt-8 text-indigo-500'>
               <div className='flex flex-col items-center'>
-                
+                <GoogleLogin
+                  clientId={`${process.env.REACT_APP_GOOGLE_CLIENT}`}
+                  onSuccess={responseGoogle}
+                  onFailure={responseGoogle}
+                  cookiePolicy={'single_host_origin'}
+                  render={renderProps => (
+                    <button
+                      onClick={renderProps.onClick}
+                      disabled={renderProps.disabled}
+                      className='w-full max-w-xs font-bold shadow-sm rounded-lg py-3 bg-indigo-100 text-gray-800 flex items-center justify-center transition-all duration-300 ease-in-out focus:outline-none hover:shadow focus:shadow-sm focus:shadow-outline'
+                    >
+                      <div className=' p-2 rounded-full '>
+                        <i className='fab fa-google ' />
+                      </div>
+                      <span className='ml-4'>Sign In with Google</span>
+                    </button>
+                  )}
+                ></GoogleLogin>
+                <FacebookLogin
+                  appId={`${process.env.REACT_APP_FACEBOOK_CLIENT}`}
+                  autoLoad={false}
+                  callback={responseFacebook}
+                  render={renderProps => (
+                    <button
+                      onClick={renderProps.onClick}
+                      className='w-full max-w-xs font-bold shadow-sm rounded-lg py-3 bg-indigo-100 text-gray-800 flex items-center justify-center transition-all duration-300 ease-in-out focus:outline-none hover:shadow focus:shadow-sm focus:shadow-outline mt-5'
+                    >
+                      <div className=' p-2 rounded-full '>
+                        <i className='fab fa-facebook' />
+                      </div>
+                      <span className='ml-4'>Sign In with Facebook</span>
+                    </button>
+                  )}
+                />
 
                 <a
                   className='w-full max-w-xs font-bold shadow-sm rounded-lg py-3
@@ -138,34 +167,6 @@ const Login = ({ history }) => {
                 className='mx-auto max-w-xs relative '
                 onSubmit={handleSubmit}
               >
-                <GoogleLogin
-                  clientId={`${process.env.REACT_APP_GOOGLE_CLIENT}`}
-                  onSuccess={responseGoogle}
-                  onFailure={responseGoogle}
-                  cookiePolicy={'single_host_origin'}
-                  render={renderProps => (
-                    <button
-                      onClick={renderProps.onClick}
-                      disabled={renderProps.disabled}
-                      className='w-full max-w-xs font-bold shadow-sm rounded-lg py-3 bg-indigo-100 text-gray-800 flex items-center justify-center transition-all duration-300 ease-in-out focus:outline-none hover:shadow focus:shadow-sm focus:shadow-outline'
-                    >
-                      Sign In With Google
-                    </button>
-                  )}
-                ></GoogleLogin>
-                <FacebookLogin
-                  appId={`${process.env.REACT_APP_FACEBOOK_CLIENT}`}
-                  autoLoad={false}
-                  callback={responseFacebook}
-                  render={renderProps => (
-                    <button
-                      onClick={renderProps.onClick}
-                      className='w-full max-w-xs font-bold shadow-sm rounded-lg py-3 bg-indigo-100 text-gray-800 flex items-center justify-center transition-all duration-300 ease-in-out focus:outline-none hover:shadow focus:shadow-sm focus:shadow-outline mt-5'
-                    >
-                      Sign In with Facebook
-                    </button>
-                  )}
-                />
                 <input
                   className='w-full px-8 py-4 rounded-lg font-medium bg-gray-100 border border-gray-200 placeholder-gray-500 text-sm focus:outline-none focus:border-gray-400 focus:bg-white'
                   type='email'
